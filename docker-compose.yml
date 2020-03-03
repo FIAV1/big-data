@@ -1,0 +1,243 @@
+version: '3.7'
+
+services:
+  # APACHE HTTP SERVER
+  apache:
+    image: httpd:2.4.41
+    container_name: apache
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ./docker_data/apache/httpd.conf
+        target: /usr/local/apache2/conf/httpd.conf
+      - type: volume
+        source: apache_logs
+        target: /usr/local/apache2/logs
+    ports:
+      - 80:80
+    networks:
+      - elk_net
+    hostname: apache
+
+  # ZOOKEEPER
+  zookeeper:
+    image: zookeeper:3.5.6
+    container_name: zookeeper
+    restart: always
+    environment:
+      ZOO_AUTOPURGE_PURGEINTERVAL: 1
+      # Next env variable redirect logs from stdout/stderr to /logs/zookeeper.log
+      # It can be useful to persist data if this option is enabled
+      # ZOO_LOG4J_PROP: 'INFO,ROLLINGFILE'
+    volumes:
+      - type: volume
+        source: zookeeper_data
+        target: /data
+      - type: volume
+        source: zookeeper_datalog
+        target: /datalog
+      # Enable this option if you redirect logs to a file to persist them
+      # - type: volume
+      #   source: zookeeper_logs
+      #   target: /logs/zookeeper.log
+    ports:
+      - 2181:2181
+    networks:
+      - apache_net
+    hostname: zookeeper
+
+  # KAFKA
+  kafka:
+    image: wurstmeister/kafka:2.12-2.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    restart: always
+    environment:
+      HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://_{HOSTNAME_COMMAND}:9094
+      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: 0
+      KAFKA_CREATE_TOPICS: 'twitter:1:1' # <name:partition:replicas>
+      KAFKA_RETENTION_BYTES: 5368709120 # 5GB per partition
+      KAFKA_RETENTION_MS: 3600000 # 1h per topic
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - type: volume
+        source: kafka_data
+        target: /kafka
+    networks:
+      - apache_net
+      - elk_net
+    ports:
+      - 9092:9092
+      - 9094:9094
+    hostname: kafka
+
+  # STORM
+  nimbus:
+    image: storm:2.1.0
+    container_name: nimbus
+    depends_on:
+      - zookeeper
+    restart: always
+    volumes:
+      - type: bind
+        source: ./docker_data/storm/storm.yaml
+        target: /conf/storm.yaml
+      - type: bind
+        source: ./storm_topologies/twitter_sentiment/target/twitter_sentiment-0.0.1-SNAPSHOT-jar-with-dependencies.jar
+        target: /storm_topologies/twitter_sentiment-0.0.1-SNAPSHOT-jar-with-dependencies.jar
+      - type: volume
+        source: storm_data
+        target: /data
+      - type: volume
+        source: storm_logs
+        target: /logs
+    command: storm nimbus
+    networks:
+      - apache_net
+      - elk_net
+    ports:
+      - 6627:6627
+    hostname: nimbus
+
+  supervisor:
+    image: storm:2.1.0
+    container_name: supervisor
+    depends_on:
+      - zookeeper
+      - nimbus
+    restart: always
+    volumes:
+      - type: bind
+        source: ./docker_data/storm/data
+        target: /storm_topologies_data
+    command: storm supervisor
+    networks:
+      - apache_net
+      - elk_net
+    hostname: supervisor
+
+  ui:
+    image: storm:2.1.0
+    container_name: ui
+    depends_on:
+      - zookeeper
+      - nimbus
+      - supervisor
+    restart: always
+    command: storm ui
+    networks:
+      - apache_net
+    ports:
+      - 8080:8080
+    hostname: ui
+
+  logviewer:
+    image: storm:2.1.0
+    container_name: logviewer
+    depends_on:
+      - zookeeper
+      - nimbus
+      - supervisor
+      - ui
+    restart: always
+    command: storm logviewer
+    networks:
+      - apache_net
+    ports:
+      - 8000:8000
+    hostname: logviewer
+
+  # ELK STACK
+  elasticsearch:
+    image: elasticsearch:7.6.0
+    container_name: elasticsearch
+    restart: on-failure
+    environment:
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks
+      # see https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.type: single-node
+      ES_JAVA_OPTS: '-Xms512m -Xmx512m'
+    volumes:
+      - type: volume
+        source: elasticsearch_data
+        target: /usr/share/elasticsearch/data
+    networks:
+      - apache_net
+      - elk_net
+    ports:
+      - 9200:9200
+      - 9300:9300
+    hostname: elasticsearch
+
+  logstash:
+    image: logstash:7.6.0
+    container_name: logstash
+    restart: on-failure
+    environment:
+      LS_JAVA_OPTS: '-Xmx256m -Xms256m'
+      TWITTER_CONSUMER_KEY: $TWITTER_CONSUMER_KEY
+      TWITTER_CONSUMER_SECRET: $TWITTER_CONSUMER_SECRET
+      TWITTER_OAUTH_TOKEN: $TWITTER_OAUTH_TOKEN
+      TWITTER_OAUTH_TOKEN_SECRET: $TWITTER_OAUTH_TOKEN_SECRET
+      OPENWEATHERMAP_APPID: $OPENWEATHERMAP_APPID
+    volumes:
+      - type: bind
+        source: ./docker_data/logstash/pipelines.yml
+        target: /usr/share/logstash/config/pipelines.yml
+      - type: bind
+        source: ./docker_data/logstash/pipeline
+        target: /usr/share/logstash/pipeline
+      - type: volume
+        source: apache_logs
+        target: /apache_logs
+      - type: volume
+        source: logstash_data
+        target: /logstash
+    networks:
+      - apache_net
+      - elk_net
+    ports:
+      - 5000:5000/tcp
+      - 5000:5000/udp
+      - 9600:9600
+    hostname: logstash
+
+  kibana:
+    image: kibana:7.6.0
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    restart: on-failure
+    volumes:
+      - type: volume
+        source: kibana_data
+        target: /kibana
+    networks:
+      - elk_net
+    ports:
+      - '5601:5601'
+    hostname: kibana
+
+networks:
+  apache_net:
+  elk_net:
+
+volumes:
+  apache_logs:
+  zookeeper_data:
+  zookeeper_datalog:
+  # Enable next option to persist zookeeper logs
+  # zookeeper_logs:
+  kafka_data:
+  storm_data:
+  storm_logs:
+  elasticsearch_data:
+  logstash_data:
+  kibana_data:

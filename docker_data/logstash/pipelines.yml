@@ -1,0 +1,10 @@
+- pipeline.id: logs
+  path.config: '/usr/share/logstash/pipeline/logs.conf'
+- pipeline.id: twitter
+  path.config: '/usr/share/logstash/pipeline/twitter.conf'
+- pipeline.id: meteo_nowcast
+  path.config: '/usr/share/logstash/pipeline/meteo_nowcast.conf'
+- pipeline.id: meteo_forecast
+  path.config: '/usr/share/logstash/pipeline/meteo_forecast.conf'
+- pipeline.id: uvi_forecast
+  path.config: '/usr/share/logstash/pipeline/uvi_forecast.conf'

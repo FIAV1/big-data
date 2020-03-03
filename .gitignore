@@ -1,0 +1,9 @@
+# Editor files
+.vscode
+
+# Env files
+.env
+
+# Maven files
+storm_topologies/**/target
+storm_topologies/**/log

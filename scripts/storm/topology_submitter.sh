@@ -1,0 +1,1 @@
+docker-compose exec nimbus storm jar /storm_topologies/twitter_sentiment-0.0.1-SNAPSHOT-jar-with-dependencies.jar com.stormadvance.twitter_sentiment.TwitterTopology /storm_topologies_data/AFINN-111.txt
