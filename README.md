@@ -20,7 +20,6 @@ This directory contains data and configuration files that will be binded to dock
   - `pipeline` this directory contains the pipeline configuration files that will be used by logstash to setup its pipelines
   - `pipelines.yml` this file is used by logstash that gives the location of pipeline configuration files and some other specific configurations
 - `storm`
-  - `data` this directory contains data files that will be used by topologies for the processing
   - `storm.yaml` this is the configuration file of storm
 
 ### `scripts`

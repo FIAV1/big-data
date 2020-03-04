@@ -113,10 +113,6 @@ services:
       - zookeeper
       - nimbus
     restart: always
-    volumes:
-      - type: bind
-        source: ./docker_data/storm/data
-        target: /storm_topologies_data
     command: storm supervisor
     networks:
       - apache_net

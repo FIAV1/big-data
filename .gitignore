@@ -5,5 +5,9 @@
 .env
 
 # Maven files
-storm_topologies/**/target
+storm_topologies/**/.classpath
+storm_topologies/**/.factorypath
+storm_topologies/**/.project
+storm_topologies/**/.settings
 storm_topologies/**/log
+storm_topologies/**/target

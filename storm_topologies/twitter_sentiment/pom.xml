@@ -1,65 +1,53 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <!-- Project Information-->
   <modelVersion>4.0.0</modelVersion>
-
-  <groupId>com.stormadvance</groupId>
+  <groupId>com.fiav1</groupId>
   <artifactId>twitter_sentiment</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
+  <version>1.0.0-SNAPSHOT</version>
 
-  <name>twitter_sentiment</name>
-  <url>http://maven.apache.org</url>
+  <!-- Additional Project Information -->
+  <name>Storm Twitter Sentiment Topology</name>
+  <description>A Storm topology used to deduce tweets sentiment</description>
 
+  <!-- Project Properties (source/target JRE, encodings)-->
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.apache.storm</groupId>
-      <artifactId>storm-elasticsearch</artifactId>
-      <version>2.1.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.storm</groupId>
-      <artifactId>storm-kafka-client</artifactId>
-      <version>2.1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka-clients</artifactId>
-      <version>2.3.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <version>2.8.6</version>
-    </dependency>
-
+    <!-- STORM -->
     <dependency>
       <groupId>org.apache.storm</groupId>
       <artifactId>storm-core</artifactId>
       <version>2.1.0</version>
       <scope>provided</scope>
     </dependency>
-
     <dependency>
-      <groupId>org.twitter4j</groupId>
-      <artifactId>twitter4j-stream</artifactId>
-      <version>4.0.7</version>
+      <groupId>org.apache.storm</groupId>
+      <artifactId>storm-kafka-client</artifactId>
+      <version>2.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.storm</groupId>
+      <artifactId>storm-elasticsearch</artifactId>
+      <version>2.1.0</version>
     </dependency>
 
-
-    <!-- Utilities -->
+    <!-- KAFKA -->
     <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-      <version>1.9.13</version>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>2.4.0</version>
     </dependency>
 
+    <!-- GOOGLE JSON -->
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.8.6</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -72,7 +60,9 @@
           </descriptorRefs>
           <archive>
             <manifest>
-              <mainClass></mainClass>
+              <mainClass>
+                com.fiav1.twitter_sentiment.TwitterTopology
+              </mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -86,33 +76,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2.1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <executable>java</executable>
-          <includeProjectDependencies>true</includeProjectDependencies>
-          <includePluginDependencies>false</includePluginDependencies>
-          <classpathScope>compile</classpathScope>
-          <mainClass>${main.class}</mainClass>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-      </plugin>
-
     </plugins>
   </build>
 </project>
