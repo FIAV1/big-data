@@ -1,6 +1,6 @@
 # 🖥📈 Big Data Pipeline 📈🖥
 
-🎓🎓🎓 This project has been made to test currently top open source technologies for Big Data Analytics, and it's part of Laurea Magistrale in Ingegneria Informatica e dell'Automazione thesis in Unverità di Ferrara made by Federico Frigo. 🎓🎓🎓
+🎓🎓🎓 This project has been made to test currently top open source technologies for Big Data Analytics, and it's part of Laurea Magistrale in Ingegneria Informatica e dell'Automazione thesis in Unverità di Ferrara made by [Federico Frigo](https://github.com/FIAV1). 🎓🎓🎓
 
 ## ☝ Prerequisites
 
