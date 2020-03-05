@@ -200,8 +200,6 @@ services:
       - apache_net
       - elk_net
     ports:
-      - 5000:5000/tcp
-      - 5000:5000/udp
       - 9600:9600
     hostname: logstash
 
@@ -218,7 +216,7 @@ services:
     networks:
       - elk_net
     ports:
-      - '5601:5601'
+      - 5601:5601
     hostname: kibana
 
 networks:
